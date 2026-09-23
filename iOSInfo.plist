@@ -9,7 +9,7 @@
     <key>CFBundleExecutable</key>
     <string>$(EXECUTABLE_NAME)</string>
     <key>CFBundleIdentifier</key>
-    <string>com.watch360.app.watchkitapp</string>
+    <string>com.watch360.ios</string>
     <key>CFBundleInfoDictionaryVersion</key>
     <string>6.0</string>
     <key>CFBundleName</key>
@@ -20,18 +20,15 @@
     <string>1.0.0</string>
     <key>CFBundleVersion</key>
     <string>1</string>
-    <key>WKApplication</key>
-    <true/>
-    <key>WKCompanionAppBundleIdentifier</key>
-    <string>com.watch360.app</string>
-    <key>WKRunsIndependentlyOfCompanionApp</key>
+    <key>LSRequiresIPhoneOS</key>
     <true/>
     <key>NSLocalNetworkUsageDescription</key>
-    <string>Watch360 requires access to your local Wi-Fi network to communicate with your RGH/JTAG Xbox 360 console over XBDM and JRPC on port 730.</string>
-    <key>NSBonjourServices</key>
+    <string>Watch360 requires access to your local Wi-Fi network to communicate with your RGH/JTAG Xbox 360 console.</string>
+    <key>UILaunchScreen</key>
+    <dict/>
+    <key>UISupportedInterfaceOrientations</key>
     <array>
-        <string>_xbdm._tcp</string>
-        <string>_xbox._tcp</string>
+        <string>UIInterfaceOrientationPortrait</string>
     </array>
 </dict>
 </plist>

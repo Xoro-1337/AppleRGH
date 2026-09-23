@@ -3,33 +3,45 @@ options:
   bundleIdPrefix: com.watch360
   deploymentTarget:
     watchOS: "9.0"
+    iOS: "16.0"
 settings:
   SWIFT_VERSION: "5.9"
   CURRENT_PROJECT_VERSION: 1
   MARKETING_VERSION: 1.0.0
-targets:
-  Watch360Core:
-    type: framework
-    platform: watchOS
-    sources:
-      - Sources/Watch360Core
-    settings:
-      PRODUCT_BUNDLE_IDENTIFIER: com.watch360.core
-      DEFINES_MODULE: YES
 
+targets:
   Watch360:
     type: application
     platform: watchOS
     sources:
       - Sources/Watch360
-    dependencies:
-      - target: Watch360Core
+      - Sources/Watch360Core
     info:
       path: Info.plist
     settings:
-      PRODUCT_BUNDLE_IDENTIFIER: com.watch360.app
+      PRODUCT_BUNDLE_IDENTIFIER: com.watch360.app.watchkitapp
       GENERATE_INFOPLIST_FILE: NO
       INFOPLIST_FILE: Info.plist
+      CODE_SIGN_STYLE: Manual
+      CODE_SIGN_IDENTITY: ""
+      CODE_SIGNING_REQUIRED: NO
+      CODE_SIGNING_ALLOWED: NO
+
+  Watch360iOS:
+    type: application
+    platform: iOS
+    sources:
+      - Sources/Watch360iOS
+      - Sources/Watch360Core
+    dependencies:
+      - target: Watch360
+        embed: true
+    info:
+      path: iOSInfo.plist
+    settings:
+      PRODUCT_BUNDLE_IDENTIFIER: com.watch360.app
+      GENERATE_INFOPLIST_FILE: NO
+      INFOPLIST_FILE: iOSInfo.plist
       CODE_SIGN_STYLE: Manual
       CODE_SIGN_IDENTITY: ""
       CODE_SIGNING_REQUIRED: NO
@@ -40,5 +52,4 @@ targets:
     platform: watchOS
     sources:
       - Tests/Watch360Tests
-    dependencies:
-      - target: Watch360Core
+      - Sources/Watch360Core
