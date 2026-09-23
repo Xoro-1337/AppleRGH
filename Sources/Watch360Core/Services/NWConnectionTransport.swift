@@ -24,6 +24,89 @@ public enum TransportError: LocalizedError {
     }
 }
 
+// MARK: - Thread-Safe Continuation Gate
+final class ContinuationGate<T>: @unchecked Sendable {
+    private let lock = NSLock()
+    private var hasFired = false
+    private var continuation: CheckedContinuation<T, Error>?
+    
+    init(_ continuation: CheckedContinuation<T, Error>) {
+        self.continuation = continuation
+    }
+    
+    func resume(returning value: T) {
+        lock.lock()
+        defer { lock.unlock() }
+        guard !hasFired, let cont = continuation else { return }
+        hasFired = true
+        continuation = nil
+        cont.resume(returning: value)
+    }
+    
+    func resume(throwing error: Error) {
+        lock.lock()
+        defer { lock.unlock() }
+        guard !hasFired, let cont = continuation else { return }
+        hasFired = true
+        continuation = nil
+        cont.resume(throwing: error)
+    }
+}
+
+// MARK: - Thread-Safe Line Receiver
+final class LineReceiver: @unchecked Sendable {
+    private let lock = NSLock()
+    private var accumulatedData = Data()
+    private let gate: ContinuationGate<String>
+    private weak var connection: NWConnection?
+    
+    init(connection: NWConnection, gate: ContinuationGate<String>) {
+        self.connection = connection
+        self.gate = gate
+    }
+    
+    func start() {
+        readNextChunk()
+    }
+    
+    private func readNextChunk() {
+        guard let conn = connection else {
+            gate.resume(throwing: TransportError.notConnected)
+            return
+        }
+        
+        conn.receive(minimumIncompleteLength: 1, maximumLength: 2048) { [weak self] data, _, isComplete, error in
+            guard let self = self else { return }
+            
+            if let error = error {
+                self.gate.resume(throwing: TransportError.connectionFailed(error.localizedDescription))
+                return
+            }
+            
+            if let data = data, !data.isEmpty {
+                self.lock.lock()
+                self.accumulatedData.append(data)
+                let currentString = String(data: self.accumulatedData, encoding: .ascii) ?? String(data: self.accumulatedData, encoding: .utf8)
+                self.lock.unlock()
+                
+                if let string = currentString, string.contains("\r\n") || string.contains("\n") {
+                    self.gate.resume(returning: string)
+                    return
+                }
+            }
+            
+            if isComplete {
+                self.lock.lock()
+                let finalString = String(data: self.accumulatedData, encoding: .ascii) ?? ""
+                self.lock.unlock()
+                self.gate.resume(returning: finalString)
+            } else {
+                self.readNextChunk()
+            }
+        }
+    }
+}
+
 /// Actor managing low-level TCP socket communication to the Xbox 360 via Network.framework
 public actor NWConnectionTransport {
     private var connection: NWConnection?
@@ -58,30 +141,19 @@ public actor NWConnectionTransport {
         
         // Wait for connection to transition to ready state
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
-            var resumed = false
+            let gate = ContinuationGate<Void>(continuation)
             
             conn.stateUpdateHandler = { state in
                 switch state {
                 case .ready:
-                    if !resumed {
-                        resumed = true
-                        continuation.resume()
-                    }
+                    gate.resume(returning: ())
                 case .failed(let err):
-                    if !resumed {
-                        resumed = true
-                        continuation.resume(throwing: TransportError.connectionFailed(err.localizedDescription))
-                    }
+                    gate.resume(throwing: TransportError.connectionFailed(err.localizedDescription))
                 case .cancelled:
-                    if !resumed {
-                        resumed = true
-                        continuation.resume(throwing: TransportError.disconnected)
-                    }
+                    gate.resume(throwing: TransportError.disconnected)
                 case .waiting(let err):
-                    // In local network, waiting can indicate unreachable host
-                    if !resumed && (err == .posix(.ENETUNREACH) || err == .posix(.EHOSTUNREACH)) {
-                        resumed = true
-                        continuation.resume(throwing: TransportError.connectionFailed("Host unreachable"))
+                    if err == .posix(.ENETUNREACH) || err == .posix(.EHOSTUNREACH) {
+                        gate.resume(throwing: TransportError.connectionFailed("Host unreachable"))
                     }
                 default:
                     break
@@ -108,11 +180,12 @@ public actor NWConnectionTransport {
         
         // Send data
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+            let gate = ContinuationGate<Void>(continuation)
             conn.send(content: data, completion: .contentProcessed { error in
                 if let error = error {
-                    continuation.resume(throwing: TransportError.connectionFailed(error.localizedDescription))
+                    gate.resume(throwing: TransportError.connectionFailed(error.localizedDescription))
                 } else {
-                    continuation.resume()
+                    gate.resume(returning: ())
                 }
             })
         }
@@ -130,37 +203,9 @@ public actor NWConnectionTransport {
         return try await withThrowingTaskGroup(of: String.self) { group in
             group.addTask {
                 try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<String, Error>) in
-                    var accumulatedData = Data()
-                    
-                    func readNextChunk() {
-                        conn.receive(minimumIncompleteLength: 1, maximumLength: 2048) { data, _, isComplete, error in
-                            if let error = error {
-                                continuation.resume(throwing: TransportError.connectionFailed(error.localizedDescription))
-                                return
-                            }
-                            
-                            if let data = data, !data.isEmpty {
-                                accumulatedData.append(data)
-                                
-                                if let string = String(data: accumulatedData, encoding: .ascii) ?? String(data: accumulatedData, encoding: .utf8) {
-                                    // Check if we hit end of line or complete response
-                                    if string.contains("\r\n") || string.contains("\n") {
-                                        continuation.resume(returning: string)
-                                        return
-                                    }
-                                }
-                            }
-                            
-                            if isComplete {
-                                let finalString = String(data: accumulatedData, encoding: .ascii) ?? ""
-                                continuation.resume(returning: finalString)
-                            } else {
-                                readNextChunk()
-                            }
-                        }
-                    }
-                    
-                    readNextChunk()
+                    let gate = ContinuationGate<String>(continuation)
+                    let receiver = LineReceiver(connection: conn, gate: gate)
+                    receiver.start()
                 }
             }
             

@@ -46,7 +46,7 @@ public actor JRPCClient {
     }
     
     /// Query console hardware temperatures (CPU, GPU, EDRAM, Motherboard)
-    public func getTemperatures() async throws -> (cpu: Double, gpu: Double, edram: Double, mb: Double) {
+    public func getTemperatures() async throws -> HardwareTemperatures {
         let command = "consolefeatures ver=2 type=2\r\n"
         let raw = try await transport.send(command: command)
         let response = XBDMResponse.parse(rawString: raw)
@@ -115,7 +115,7 @@ public actor JRPCClient {
     
     // MARK: - Parsers
     
-    private func parseTemperatureResponse(_ text: String) -> (cpu: Double, gpu: Double, edram: Double, mb: Double) {
+    private func parseTemperatureResponse(_ text: String) -> HardwareTemperatures {
         // Formats handled:
         // 1. "CPU:54.2 GPU:61.8 EDRAM:58.0 MB:39.5"
         // 2. "54.2,61.8,58.0,39.5" or hex formatted values
@@ -157,7 +157,7 @@ public actor JRPCClient {
             }
         }
         
-        return (cpu, gpu, edram, mb)
+        return HardwareTemperatures(cpu: cpu, gpu: gpu, edram: edram, motherboard: mb)
     }
     
     private func parseConsoleTypeString(_ raw: String) -> String {

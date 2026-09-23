@@ -320,7 +320,7 @@ public class XboxToolboxManager: ObservableObject {
         do {
             let kernel = (try? await jrpcClient.getKernelVersion()) ?? "2.0.17559.0"
             let consoleType = (try? await jrpcClient.getConsoleType()) ?? "Xbox 360 RGH"
-            let titleInfo = (try? await xbdmClient.getTitleInfo()) ?? ("00000000", "Dashboard")
+            let titleInfo = (try? await xbdmClient.getTitleInfo()) ?? RunningTitleInfo(titleId: "00000000", name: "Dashboard")
             
             self.telemetry.kernelVersion = kernel
             self.telemetry.consoleType = consoleType
@@ -366,7 +366,7 @@ public class XboxToolboxManager: ObservableObject {
             self.telemetry.cpuTempC = temps.cpu
             self.telemetry.gpuTempC = temps.gpu
             self.telemetry.edramTempC = temps.edram
-            self.telemetry.motherboardTempC = temps.mb
+            self.telemetry.motherboardTempC = temps.motherboard
             self.telemetry.lastUpdated = Date()
         } catch {
             // Skip failed poll

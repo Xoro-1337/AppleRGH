@@ -62,7 +62,7 @@ public actor XBDMClient {
     }
     
     /// Query current running title
-    public func getTitleInfo() async throws -> (titleId: String, name: String) {
+    public func getTitleInfo() async throws -> RunningTitleInfo {
         let response = try await execute(.title)
         // Response format example: "200- name="dash.xex" dir="""
         var titleName = "Unknown"
@@ -73,7 +73,7 @@ public actor XBDMClient {
             }
         }
         
-        return ("00000000", titleName)
+        return RunningTitleInfo(titleId: "00000000", name: titleName)
     }
     
     /// Launch an XEX executable file

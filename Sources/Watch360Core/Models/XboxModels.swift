@@ -24,6 +24,32 @@ public struct XboxConsoleProfile: Identifiable, Codable, Hashable {
     )
 }
 
+// MARK: - Running Title Info
+public struct RunningTitleInfo: Equatable, Codable {
+    public let titleId: String
+    public let name: String
+    
+    public init(titleId: String = "00000000", name: String = "Dashboard") {
+        self.titleId = titleId
+        self.name = name
+    }
+}
+
+// MARK: - Hardware Temperatures
+public struct HardwareTemperatures: Equatable, Codable {
+    public let cpu: Double
+    public let gpu: Double
+    public let edram: Double
+    public let motherboard: Double
+    
+    public init(cpu: Double, gpu: Double, edram: Double, motherboard: Double) {
+        self.cpu = cpu
+        self.gpu = gpu
+        self.edram = edram
+        self.motherboard = motherboard
+    }
+}
+
 // MARK: - Hardware Telemetry
 public struct ConsoleTelemetry: Equatable, Codable {
     public var cpuTempC: Double
