@@ -51,9 +51,9 @@ jobs:
       - name: Package Watch360.ipa
         run: |
           mkdir -p build/Payload
-          cp -r build/DeviceOutput/Watch360.app build/Payload/
+          cp -r build/DeviceOutput/*.app build/Payload/
           cd build && zip -r Watch360.ipa Payload
-          ls -la Watch360.ipa
+          ls -lh Watch360.ipa
 
       - name: Upload AltStore IPA Artifact
         uses: actions/upload-artifact@v4

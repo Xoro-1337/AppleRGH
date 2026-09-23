@@ -19,6 +19,7 @@ targets:
     info:
       path: Info.plist
     settings:
+      PRODUCT_NAME: Watch360
       PRODUCT_BUNDLE_IDENTIFIER: com.watch360.app.watchkitapp
       GENERATE_INFOPLIST_FILE: NO
       INFOPLIST_FILE: Info.plist
@@ -39,6 +40,7 @@ targets:
     info:
       path: iOSInfo.plist
     settings:
+      PRODUCT_NAME: Watch360
       PRODUCT_BUNDLE_IDENTIFIER: com.watch360.app
       GENERATE_INFOPLIST_FILE: NO
       INFOPLIST_FILE: iOSInfo.plist

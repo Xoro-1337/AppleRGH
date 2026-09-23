@@ -1,5 +1,7 @@
 import SwiftUI
+#if canImport(Watch360Core)
 import Watch360Core
+#endif
 
 public struct XNotifyView: View {
     @EnvironmentObject var manager: XboxToolboxManager

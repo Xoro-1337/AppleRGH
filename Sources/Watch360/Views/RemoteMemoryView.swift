@@ -1,5 +1,7 @@
 import SwiftUI
+#if canImport(Watch360Core)
 import Watch360Core
+#endif
 
 public struct RemoteMemoryView: View {
     @EnvironmentObject var manager: XboxToolboxManager
