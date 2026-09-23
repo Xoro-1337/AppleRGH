@@ -1,5 +1,4 @@
 // swift-tools-version: 5.9
-// The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
 
@@ -15,8 +14,8 @@ let package = Package(
             name: "Watch360Core",
             targets: ["Watch360Core"]
         ),
-        .executable(
-            name: "Watch360App",
+        .library(
+            name: "Watch360",
             targets: ["Watch360"]
         )
     ],
@@ -27,7 +26,7 @@ let package = Package(
             dependencies: [],
             path: "Sources/Watch360Core"
         ),
-        .executableTarget(
+        .target(
             name: "Watch360",
             dependencies: ["Watch360Core"],
             path: "Sources/Watch360",
