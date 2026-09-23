@@ -36,22 +36,22 @@ jobs:
           xcodegen generate
           sed -i '' 's/objectVersion = [0-9]*/objectVersion = 56/g' Watch360.xcodeproj/project.pbxproj
 
-      - name: Build Device Target for AltStore & Sideloadly
+      - name: Build & Archive for AltStore & Sideloadly
         run: |
-          xcodebuild build \
+          xcodebuild archive \
             -project Watch360.xcodeproj \
             -scheme Watch360iOS \
             -destination "generic/platform=iOS" \
+            -archivePath "$(pwd)/build/Watch360.xcarchive" \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO \
-            AD_HOC_CODE_SIGNING_ALLOWED=YES \
-            CONFIGURATION_BUILD_DIR="$(pwd)/build/DeviceOutput"
+            AD_HOC_CODE_SIGNING_ALLOWED=YES
 
       - name: Package Watch360.ipa
         run: |
           mkdir -p build/Payload
-          cp -r build/DeviceOutput/*.app build/Payload/
+          cp -r build/Watch360.xcarchive/Products/Applications/*.app build/Payload/
           cd build && zip -r Watch360.ipa Payload
           ls -lh Watch360.ipa
 

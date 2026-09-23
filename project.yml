@@ -19,7 +19,7 @@ targets:
     info:
       path: Info.plist
     settings:
-      PRODUCT_NAME: Watch360
+      PRODUCT_NAME: Watch360Watch
       PRODUCT_BUNDLE_IDENTIFIER: com.watch360.app.watchkitapp
       GENERATE_INFOPLIST_FILE: NO
       INFOPLIST_FILE: Info.plist
